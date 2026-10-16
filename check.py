@@ -55,7 +55,9 @@ def find_roles(msg):
 
 
 def make_post(pid, title, url, msg):
-    return {"id": pid, "title": title, "url": url, "roles": find_roles(msg)}
+    roles = find_roles(msg)
+    print(f"  found: {title[:80]!r} | roles={roles}")
+    return {"id": pid, "title": title, "url": url, "roles": roles}
 
 
 # ---- channels to read
@@ -69,6 +71,7 @@ active_threads = (get(f"/guilds/{GUILD}/threads/active") or {}).get("threads", [
 # ---- collect posts
 posts = []
 for ch in channels:
+    print(f"Reading #{ch.get('name')} ({ch['id']}) type={ch['type']}")
     if ch["type"] in (15, 16):  # forum / media: each post is a thread
         threads = [t for t in active_threads if t.get("parent_id") == ch["id"]]
         threads += (get(f"/channels/{ch['id']}/threads/archived/public", limit=50) or {}).get("threads", [])
@@ -78,7 +81,12 @@ for ch in channels:
                 posts.append(make_post(t["id"], t["name"],
                                        f"https://discord.com/channels/{GUILD}/{t['id']}", msg))
     elif ch["type"] in (0, 5):
-        for msg in get(f"/channels/{ch['id']}/messages", limit=50) or []:
+        msgs = get(f"/channels/{ch['id']}/messages", limit=50)
+        if msgs is None:
+            print(f"  cannot read #{ch.get('name')}: bot lacks View Channel / Read Message History here")
+        else:
+            print(f"  {len(msgs)} message(s) read")
+        for msg in msgs or []:
             if msg.get("webhook_id") or msg["author"].get("bot"):
                 continue
             first_line = (msg.get("content") or "").strip().split("\n")[0]
@@ -97,14 +105,25 @@ cutoff = (now - timedelta(days=2)).timestamp()
 reminded = {k for k in reminded if int(k.split(":")[1]) > cutoff}  # prune old
 
 # ---- send reminders
+print(f"Total posts found: {len(posts)} (now = {now:%Y-%m-%d %H:%M} UTC)")
 for p in posts:
     when = parse_when(p["title"])
     if not when:
         continue
     ts = int(when.timestamp())
     key = f"{p['id']}:{ts}"
-    if key in reminded or not (timedelta(0) < when - now <= timedelta(hours=1)):
+    mins = int((when - now).total_seconds() // 60)
+    name = p["title"][:60]
+    if key in reminded:
+        print(f"  skip (already reminded): {name!r}")
         continue
+    if mins <= 0:
+        print(f"  skip (already started): {name!r} at {when:%d/%m/%Y %H:%M} UTC")
+        continue
+    if mins > 60:
+        print(f"  skip (too early, starts in {mins} min): {name!r}")
+        continue
+    print(f"  SENDING reminder: {name!r} starts in {mins} min, roles={p['roles']}")
 
     mentions = [f"<@&{r}>" for r in p["roles"]]
     content = (
