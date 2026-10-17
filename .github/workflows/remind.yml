@@ -2,7 +2,7 @@ name: event-reminder
 
 on:
   schedule:
-    - cron: "3,19,23,33,43,53 * * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
