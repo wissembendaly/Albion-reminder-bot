@@ -11,7 +11,7 @@ STATE = "reminded.json"
 H = {"Authorization": f"Bot {TOKEN}"}
 
 DATE_RE = re.compile(r"(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})|(\d{4})-(\d{1,2})-(\d{1,2})")
-TIME_RE = re.compile(r"\b(\d{1,2})[:hH](\d{2})\b")
+TIME_RE = re.compile(r"\b(\d{1,2})[:hH](\d{2})(?!\d)")
 
 
 def get(path, **params):
@@ -40,7 +40,7 @@ def parse_when(title):
 def clean_title(title):
     t = DATE_RE.sub("", title)
     t = TIME_RE.sub("", t)
-    t = re.sub(r"\bUTC\b", "", t, flags=re.I)
+    t = re.sub(r"UTC", "", t, flags=re.I)
     t = t.strip(" -|·–—,()[]")
     return re.sub(r"\s{2,}", " ", t) or title
 
@@ -86,6 +86,11 @@ for ch in channels:
             print(f"  cannot read #{ch.get('name')}: bot lacks View Channel / Read Message History here")
         else:
             print(f"  {len(msgs)} message(s) read")
+            empty = sum(1 for m in msgs if not m.get("content")
+                        and not m.get("webhook_id") and not m["author"].get("bot"))
+            if empty:
+                print(f"  WARNING: {empty} message(s) have empty content "
+                      "(is Message Content Intent turned on in the Developer Portal?)")
         for msg in msgs or []:
             if msg.get("webhook_id") or msg["author"].get("bot"):
                 continue
