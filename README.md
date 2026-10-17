@@ -18,16 +18,16 @@ The reminder contains the post title, the date and time (UTC plus a local-time t
 
 ## Title format
 
-The date and time must both be in the title, separately.
+Use `name | info | time | date`. The date and time are read from the title (UTC), in any order, and the rest is shown in the reminder as the name and the info.
 
 | Part | Accepted formats |
 |---|---|
 | Date | `20/10/2026`, `20-10-2026`, `20.10.2026`, `2026-10-20` (day first, not month first) |
-| Time | `20:00`, `20h00` (24-hour, UTC) |
+| Time | `20:00`, `20h00` (24-hour, UTC), with or without a space before `UTC` |
 
 Examples:
-- `Raid night | 20/10/2026 | 20:00 UTC`
-- `Movie night 2026-10-21 21h30`
+- `Raid night | bring potions | 20:00 UTC | 20/10/2026`
+- `Movie night | 21h30 UTC | 2026-10-21`
 
 Posts without a valid date and time are ignored.
 

@@ -37,12 +37,13 @@ def parse_when(title):
         return None
 
 
-def clean_title(title):
-    t = DATE_RE.sub("", title)
-    t = TIME_RE.sub("", t)
-    t = re.sub(r"UTC", "", t, flags=re.I)
-    t = t.strip(" -|·–—,()[]")
-    return re.sub(r"\s{2,}", " ", t) or title
+def split_title(title):
+    """'name | info | time | date' -> (name, info). Parts holding the date/time are dropped."""
+    parts = [p.strip() for p in title.split("|") if p.strip()]
+    rest = [p for p in parts if not (DATE_RE.search(p) or TIME_RE.search(p))]
+    name = rest[0] if rest else title
+    info = " | ".join(rest[1:])
+    return name, info
 
 
 def find_roles(msg):
@@ -131,12 +132,16 @@ for p in posts:
     print(f"  SENDING reminder: {name!r} starts in {mins} min, roles={p['roles']}")
 
     mentions = [f"<@&{r}>" for r in p["roles"]]
-    content = (
-        " ".join(mentions) + "\n"
-        f"⏰ **{clean_title(p['title'])}** starts in 1 hour!\n"
-        f"📅 {when:%d/%m/%Y} at {when:%H:%M} UTC · <t:{ts}:F> (<t:{ts}:R>)\n"
-        f"🔗 {p['url']}"
-    ).strip()
+    name_, info = split_title(p["title"])
+    lines = [
+        " ".join(mentions),
+        f"⏰ **{name_}** starts <t:{ts}:R>!",
+    ]
+    if info:
+        lines.append(f"ℹ️ {info}")
+    lines.append(f"📅 {when:%d/%m/%Y} at {when:%H:%M} UTC · <t:{ts}:F>")
+    lines.append(f"🔗 {p['url']}")
+    content = "\n".join(l for l in lines if l)
 
     requests.post(WEBHOOK, json={
         "content": content,
