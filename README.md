@@ -69,7 +69,7 @@ Go to Actions → event-reminder → **Run workflow**, and check the log. Create
 
 ## Behavior notes
 
-- Reminders arrive 50 to 60 minutes before the start, because the job runs every 10 minutes. Change the cron in `.github/workflows/remind.yml` to `*/5` for tighter timing.
+- A reminder is sent when an event starts between 1 hour and 1 hour 30 minutes from now (60 to 90 minutes), once per event. The job must run at least every 30 minutes, ideally every 10 to 15, otherwise some events fall between two runs and get no reminder.
 - GitHub's scheduler can run a few minutes late.
 - If a post mentions none of the listed roles, the reminder is still sent, without a ping.
 - If you edit a title to change the date or time, a new reminder is sent for the new time.

@@ -123,11 +123,11 @@ for p in posts:
     if key in reminded:
         print(f"  skip (already reminded): {name!r}")
         continue
-    if mins > 60:
+    if mins > 90:
         print(f"  skip (too early, starts in {mins} min): {name!r}")
         continue
-    if mins < 30:
-        print(f"  skip (too late, starts in {mins} min, window is 30-60 min): {name!r}")
+    if mins < 60:
+        print(f"  skip (too late, starts in {mins} min, window is 60-90 min): {name!r}")
         continue
     print(f"  SENDING reminder: {name!r} starts in {mins} min, roles={p['roles']}")
 
